@@ -27,3 +27,66 @@ Array
 
 Status=>'Success' ödeme gerçekleşti kullanıcıdan ödemeyi aldınız.
 Status=>'Error' ise hata vardır. hata mesahjına Message kısmı veya Detail=> RETURN_MESSAGE bölümünden ulaşabilirsiniz.
+
+------------------- KARTLARIN TAKSİT ORANLARINI SORGULAMA --------------------
+
+installments() isimli fonksiyonu ile  taksit oranları gelir
+    [value] => Array
+        (
+            [axess] => Array
+                (
+                    [2] => Array
+                        (
+                            [percent] => 4.22
+                            [total] => 0.00
+                            [rate] => 0.00
+                        )
+
+                    [3] => Array
+                        (
+                            [percent] => 5.04
+                            [total] => 0.00
+                            [rate] => 0.00
+                        )
+
+                    [4] => Array
+                        (
+                            [percent] => 5.60
+                            [total] => 0.00
+                            [rate] => 0.00
+                        )
+
+                )
+
+            [bonus] => Array
+                (
+                    [2] => Array
+                        (
+                            [percent] => 4.22
+                            [total] => 0.00
+                            [rate] => 0.00
+                        )
+
+                    [3] => Array
+                        (
+                            [percent] => 5.04
+                            [total] => 0.00
+                            [rate] => 0.00
+                        )
+
+                    [4] => Array
+                        (
+                            [percent] => 5.60
+                            [total] => 0.00
+                            [rate] => 0.00
+                        )
+
+             )
+                )
+
+
+---------------------- RAPOR SERVİSLERİ-------------
+
+orderReports($startDate, $endDate)  //YYYY-mm-dd
+productReports($startDate, $endDate)  //YYYY-mm-dd
+operatorReports($startDate, $endDate)  //YYYY-mm-dd
