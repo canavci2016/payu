@@ -4,8 +4,12 @@ class Payu
 {
     private $ch;
     private $url = "https://secure.payu.com.tr/order/alu/v3";
+    private $orderReportsUrl = 'https://secure.payu.com.tr/reports/orders';
+    private $productReportsUrl = 'https://secure.payu.com.tr/reports/products';
+    private $operatorReportsUl = 'https://secure.payu.com.tr/reports/operator';
     private $binURL = 'https://secure.payu.com.tr/api/card-info/v1/';
     private $tokenURL = 'https://secure.payu.com.tr/order/tokens/';
+    private $instalmentsUrl = 'https://secure.payu.com.tr/openpayu/v2/installment_payment.json/get_available_installments/';
     private $merchantID;
     private $secretKey;
     private $products = [];
@@ -15,6 +19,7 @@ class Payu
         'LU_ENABLE_TOKEN' => '1',
         'LU_TOKEN_TYPE' => 'PAY_BY_CLICK',
         'CLIENT_IP' => '127.0.0.1',
+        'DISCOUNT' => '0', //indirim tutarı
     ];
 
 
@@ -51,8 +56,8 @@ class Payu
 
 
     /*
-    * 3d security geri dönüş url
-    * */
+     * 3d security geri dönüş url
+     * */
     public function setBackRef($url)
     {
         $this->order['BACK_REF'] = $url;
@@ -60,18 +65,24 @@ class Payu
     }
 
     /*
-    * ip adresi
-    * */
+     * ip adresi
+     * */
     public function setClientIp($ip)
     {
         $this->order['CLIENT_IP'] = $ip;
-
     }
 
+    //indirim tutarı
+    public function setDiscount($price)
+    {
+        $this->order['DISCOUNT'] = $price;
+    }
+
+
     /*
-    * iban sorgulama
-    *
-    * */
+     * iban sorgulama
+     *
+     * */
 
     public function binSearch($cartNumber)
     {
@@ -88,10 +99,75 @@ class Payu
 
     }
 
+    public function orderReports($startDate, $endDate, $format = 'array')
+    {
+        return $this->reports($startDate, $endDate, 'orders', $format);
+    }
+
+    public function productReports($startDate, $endDate, $format = 'array')
+    {
+        return $this->reports($startDate, $endDate, 'products', $format);
+    }
+
+    public function operatorReports($startDate, $endDate, $format = 'array')
+    {
+        return $this->reports($startDate, $endDate, 'operators', $format);
+    }
 
     /*
-    * token kullanarak satış yapmak
-    * */
+     * sipariş raporları
+     * */
+
+    private function reports($startDate, $endDate, $reportType = 'orders', $format = 'array')
+    {
+        $startDate = date('Y-m-d', strtotime($startDate));
+        $endDate = date('Y-m-d', strtotime($endDate));
+
+        $report['merchant'] = $this->merchantID;
+        $report['startDate'] = $startDate;
+        $report['endDate'] = $endDate;
+        $report['timeStamp'] = $this->getTimestamp('Y-m-d H:i:s', true);
+        $report['signature'] = $this->calculateSignature($report);
+
+        if ($reportType == 'orders')
+            $this->ch->setUrl($this->orderReportsUrl);
+        elseif ($reportType == 'products')
+            $this->ch->setUrl($this->productReportsUrl);
+        elseif ($reportType == 'operators')
+            $this->ch->setUrl($this->operatorReportsUl);
+        else
+            $this->ch->setUrl($this->orderReportsUrl);
+
+
+        $res = $this->ch->execute($report);
+
+        if ($format == 'array')
+            return json_decode($res);
+
+
+        return $res;
+    }
+
+
+    //taksit sayılarını getiriyor.
+    public function installments($format = 'array')
+    {
+        $url = $this->instalmentsUrl . $this->merchantID;
+        $this->ch->setUrl($url);
+
+        $response = $this->ch->execute([], true);
+
+        if ($format == 'array')
+            $response = json_decode($response, 1);
+
+
+        return $response;
+    }
+
+
+    /*
+     * token kullanarak satış yapmak
+     * */
     public function saleUsingToken($token = null)
     {
 
@@ -114,8 +190,8 @@ class Payu
     }
 
     /*
-    * token geçmişi
-    * */
+* token geçmişi
+* */
     public function readTokenPaymentDetail($token = null)
     {
 
@@ -136,8 +212,8 @@ class Payu
     }
 
     /*
-    * token iptali
-    * */
+* token iptali
+* */
     public function cancelTokenPayment($token = null)
     {
 
@@ -155,15 +231,18 @@ class Payu
 
     }
 
-    private function getTimestamp($format = 'Y-m-d H:i:s')
+    private function getTimestamp($format = 'Y-m-d H:i:s', $timestamp = false)
     {
-        return date($format, time() - date("Z"));
+        if ($timestamp)
+            return time();
+        else
+            return date($format, time() - date("Z"));
     }
 
 
     /*
-    * teslimat bilgilerini doldurur.
-    * */
+     * teslimat bilgilerini doldurur.
+     * */
     public function setDelivery($firstName, $lastName, $phone, $address, $zip, $city, $state, $country_code = 'TR')
     {
         $this->order['DELIVERY_FNAME'] = $firstName;
@@ -178,9 +257,9 @@ class Payu
 
 
     /*
-    * ödeme yapan kişinin bilgileri
-    *
-    * */
+     * ödeme yapan kişinin bilgileri
+     *
+     * */
     public function setBill($name, $lastname, $email, $phone, $country_code = 'TR')
     {
         $this->order['BILL_LNAME'] = $lastname;
@@ -191,9 +270,9 @@ class Payu
     }
 
     /*
-    * Kredi kartı bilgilerini doldurur
-    *
-    * */
+     * Kredi kartı bilgilerini doldurur
+     *
+     * */
     public function setCreditCard($number, $exp_month, $exp_year, $cvv, $owner, $installments = '1')
     {
         $this->order['SELECTED_INSTALLMENTS_NUMBER'] = $installments;
@@ -219,8 +298,8 @@ class Payu
     }
 
     /*
-    * ödeme yap
-    * */
+     * ödeme yap
+     * */
     public function authorize($orderId, $redirectUrl)
     {
         $this->setBackRef($redirectUrl);
@@ -305,8 +384,8 @@ class Payu
 
 
     /*
-    * ürünleri sıralamaya sokar
-    * */
+     * ürünleri sıralamaya sokar
+     * */
     private function productOptimizer(&$order)
     {
         $productArray = array();
@@ -336,8 +415,8 @@ class Payu
 
 
     /*
-    * imzayı hasliyor
-    * */
+     * imzayı hasliyor
+     * */
     private function calculateSignature(&$params)
     {
         ksort($params);
