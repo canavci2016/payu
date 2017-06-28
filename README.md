@@ -30,7 +30,7 @@ Status=>'Error' ise hata vardır. hata mesahjına Message kısmı veya Detail=> 
 
 ------------------- KARTLARIN TAKSİT ORANLARINI SORGULAMA --------------------
 
-installments() isimli fonksiyonu ile  taksit oranları gelir
+$payu->installments() isimli fonksiyonu ile  taksit oranları gelir
     [value] => Array
         (
             [axess] => Array
@@ -87,6 +87,8 @@ installments() isimli fonksiyonu ile  taksit oranları gelir
 
 ---------------------- RAPOR SERVİSLERİ-------------
 
-orderReports($startDate, $endDate)  //YYYY-mm-dd
-productReports($startDate, $endDate)  //YYYY-mm-dd
-operatorReports($startDate, $endDate)  //YYYY-mm-dd
+$payu->orderReports($startDate, $endDate)  //YYYY-mm-dd  sipariş raporunu getirir
+
+$payu->productReports($startDate, $endDate)  //YYYY-mm-dd     ürün raporunu getirir
+
+$payu->operatorReports($startDate, $endDate)  //YYYY-mm-dd
