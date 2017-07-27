@@ -48,10 +48,22 @@ class CURL
     /**
      * @param array $header
      */
-    public function setHeader(array $header)
+    public function setHeader(array $header, $value = null)
     {
-        $this->header = $header;
+        if (is_array($header)) {
+            $this->header = $header;
+        }
+
+        if (!is_null($value)) {
+            $this->header[] = $header . ": " . $value;
+        }
         return $this;
+    }
+
+
+    public function refreshHeader()
+    {
+        $this->header = [];
     }
 
 
