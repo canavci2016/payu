@@ -48,15 +48,24 @@ class CURL
     /**
      * @param array $header
      */
-    public function setHeader(array $header, $value = null)
+    public function setHeader($header, $value = null)
     {
         if (is_array($header)) {
-            $this->header = $header;
+
+            foreach ($header as $key => $val) {
+                if (is_numeric($key))
+                    $this->header[] = $val;
+                else
+                    $this->header[] = $key . ": " . $val;
+            }
+
+
+        } else {
+            if (!is_null($value)) {
+                $this->header[] = $header . ": " . $value;
+            }
         }
 
-        if (!is_null($value)) {
-            $this->header[] = $header . ": " . $value;
-        }
         return $this;
     }
 
@@ -75,6 +84,33 @@ class CURL
         return self::$static;
     }
 
+    public function get($url = null, $params = [])
+    {
+        $this->setUrl($url);
+
+
+        $query = is_array($params) ? http_build_query($params) : $params;
+
+        $this->setUrl($this->getUrl() . '?' . $query);
+
+        return $this->execute();
+
+    }
+
+    public function post($url = null, $params = [])
+    {
+        $this->setUrl($url);
+
+        $this->isParamsJson($params);
+
+
+
+        return $this->execute($params, true);
+    }
+
+
+
+
 
     public function execute($query = [], $post = false)
     {
@@ -83,7 +119,7 @@ class CURL
 
         $curl_opt =
             [
-                CURLOPT_URL => $this->url,
+                CURLOPT_URL => $this->getUrl(),
                 CURLOPT_USERAGENT => $_SERVER['HTTP_USER_AGENT'],
                 CURLOPT_REFERER => $_SERVER['HTTP_HOST'],
                 CURLOPT_POST => 1,
@@ -113,6 +149,21 @@ class CURL
         return $connectionResponse;
     }
 
+
+    //headera göre json format sorgulaması yapıyoruz
+    private function isParamsJson($params)
+    {
+        $header = array_values($this->getHeader());
+        if (count($this->inArraySearch($header, 'application/json')) > 0) {
+            if (is_array($params))
+                throw  new  Exception('lütfen json formatından data gönderiniz. veya Header : application/json sekmesini kaldırınız');
+            elseif (is_string($params) && !$this->isJson($params))
+                throw  new  Exception('lütfen json formatından data gönderiniz. veya Header : application/json sekmesini kaldırınız');
+
+        }
+    }
+
+
     //curl hatası olup olmadığını kontrol eder.
     private function isError()
     {
@@ -137,6 +188,22 @@ class CURL
         unset($curlArray[CURLOPT_POSTFIELDS]);
     }
 
+    /*
+      * array deki belli string içinde arama yapar.
+      * */
+    private function inArraySearch(array $array, $searchword)
+    {
+        $matches = array_filter($array, function ($var) use ($searchword) {
+            return strpos($var, $searchword) !== false;
+        });
+
+        return $matches;
+    }
+
+    private function isJson($string)
+    {
+        json_decode($string);
+        return (json_last_error() == JSON_ERROR_NONE);
+    }
 
 }
-
