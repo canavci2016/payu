@@ -20,6 +20,7 @@ class Payu
         'LU_TOKEN_TYPE' => 'PAY_BY_CLICK',
         'CLIENT_IP' => '127.0.0.1',
         'DISCOUNT' => '0', //indirim tutarı
+        'ORDER_SHIPPING'=>'0',
     ];
 
 
@@ -78,7 +79,12 @@ class Payu
         $this->order['DISCOUNT'] = $price;
     }
 
-
+   //kargo tutarı
+    public function setShippingPrice($price)
+    {
+        $this->order['ORDER_SHIPPING'] = $price;
+    }
+    
     /*
      * iban sorgulama
      *
